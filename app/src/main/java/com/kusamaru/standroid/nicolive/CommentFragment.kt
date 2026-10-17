@@ -222,7 +222,8 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
             if (viewModel.isFullScreenWithoutLock) {
                 // 向きを固定しない全画面：横画面なら続行、縦に戻したら解除
                 if (isLandscapeNow) {
-                    setFullScreen()
+                    // 画面回転直後はレイアウトが終わっていないので、終わってから切り替える
+                    viewBinding.commentFragmentMotionLayout.post { if (isAdded) setFullScreen() }
                 } else {
                     viewModel.isFullScreenMode = false
                     viewModel.isFullScreenWithoutLock = false
@@ -231,10 +232,11 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
                 requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
                 setFullScreen()
             }
-        } else if (isLandscapeNow && prefSetting.getBoolean("setting_nicolive_landscape_fullscreen", false)) {
+        } else if (isLandscapeNow && prefSetting.getBoolean("setting_nicolive_landscape_fullscreen", true)) {
             // 設定ON：横画面にしたら自動で全画面（コメント一覧を隠す）
             viewModel.isFullScreenWithoutLock = true
-            setFullScreen()
+            // 画面回転直後はレイアウトが終わっていないので、終わってから切り替える
+            viewBinding.commentFragmentMotionLayout.post { if (isAdded) setFullScreen() }
         }
 
         // MainActivityのBottomNavを表示させるか。二窓Activityのせいでas?にしている
@@ -602,6 +604,12 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
         viewModel.isFullScreenMode = true
         // コメビュ非表示
         viewBinding.commentFragmentMotionLayout.transitionToState(R.id.comment_fragment_transition_fullscreen)
+        // 回転直後などで遷移が無視されることがあるので、少し後にもう一度確認する
+        viewBinding.commentFragmentMotionLayout.postDelayed({
+            if (isAdded && viewModel.isFullScreenMode && viewBinding.commentFragmentMotionLayout.currentState != R.id.comment_fragment_transition_fullscreen) {
+                viewBinding.commentFragmentMotionLayout.transitionToState(R.id.comment_fragment_transition_fullscreen)
+            }
+        }, 500)
         // 経過時間消す
         viewBinding.commentFragmentControl.playerNicoliveControlMain.isVisible = false
         // システムバー非表示

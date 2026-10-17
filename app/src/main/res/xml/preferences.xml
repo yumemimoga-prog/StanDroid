@@ -283,7 +283,7 @@
             android:title="@string/setting_nicolive_quality_low_title" />
 
         <SwitchPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:icon="@drawable/ic_fullscreen_black_24dp"
             android:key="setting_nicolive_landscape_fullscreen"
             android:summary="@string/setting_nicolive_landscape_fullscreen_description"
