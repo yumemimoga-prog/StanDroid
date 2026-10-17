@@ -71,14 +71,30 @@ object NicoLiveHlsDataSource {
      * @param cookiesProvider 最新のCookie一覧を返す関数（画質変更でCookieが更新されても追従するため）
      * */
     fun createFactory(context: Context, userAgent: String, cookiesProvider: () -> List<HlsCookie>): DataSource.Factory {
+        val appContext = context.applicationContext
         val httpFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(userAgent)
             .setAllowCrossProtocolRedirects(true)
+            // 公式プレイヤー（ブラウザ）と同じく視聴ページ由来のリクエストとして送る
+            .setDefaultRequestProperties(mapOf(
+                "Origin" to "https://live.nicovideo.jp",
+                "Referer" to "https://live.nicovideo.jp/",
+            ))
         val resolvingFactory = ResolvingDataSource.Factory(httpFactory) { dataSpec ->
-            val header = cookieHeaderFor(cookiesProvider(), dataSpec.uri.host, dataSpec.uri.path)
+            val header = cookieHeaderFor(cookiesProvider() + loginCookies(appContext), dataSpec.uri.host, dataSpec.uri.path)
             if (header != null) dataSpec.withAdditionalHeaders(mapOf("Cookie" to header)) else dataSpec
         }
         return DefaultDataSource.Factory(context, resolvingFactory)
+    }
+
+    /**
+     * ログインCookie（user_session）。復号キー（.key）の取得はログイン済みのブラウザと同じく
+     * .nicovideo.jp のログインCookieも必要なため付ける（ブラウザ・yt-dlpはCookieJarで自動的に送っている）
+     * */
+    private fun loginCookies(context: Context): List<HlsCookie> {
+        val session = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context).getString("user_session", "")
+        if (session.isNullOrEmpty()) return emptyList()
+        return listOf(HlsCookie(domain = "nicovideo.jp", path = "/", name = "user_session", value = session))
     }
 
     /** 1再生につき1回だけ診断情報をコピーするためのフラグ */
@@ -103,7 +119,8 @@ object NicoLiveHlsDataSource {
             val current = cause
             if (current is HttpDataSource.InvalidResponseCodeException) {
                 lines += "http=${current.responseCode} host=${current.dataSpec.uri.host} path=${current.dataSpec.uri.path?.takeLast(60)}"
-                lines += "sentCookie=${current.dataSpec.httpRequestHeaders.containsKey("Cookie")}"
+                val sentNames = current.dataSpec.httpRequestHeaders["Cookie"]?.split(";")?.map { it.trim().substringBefore("=") }
+                lines += "sentCookie=${sentNames ?: "なし"}"
                 val body = runCatching { String(current.responseBody, Charsets.UTF_8).take(200) }.getOrNull()
                 if (!body.isNullOrBlank()) lines += "body=$body"
             } else {
