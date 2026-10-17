@@ -181,6 +181,9 @@ class NicoLiveViewModel(application: Application, val liveIdOrCommunityId: Strin
     /** 全画面再生時はtrue */
     var isFullScreenMode = false
 
+    /** 画面の向きを固定しない全画面（横画面でコメント一覧だけ隠している状態）ならtrue */
+    var isFullScreenWithoutLock = false
+
     /** ミニプレイヤーかどうか。 */
     val isMiniPlayerMode = MutableLiveData(false)
 

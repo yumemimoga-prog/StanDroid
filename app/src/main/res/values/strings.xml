@@ -282,6 +282,8 @@
     <string name="setting_economy_title">Watch in forced economy mode</string>
     <string name="setting_nicolive_quality_low_title">Always watch in low quality</string>
     <string name="setting_nicolive_quality_low_description">Please when Internet is slow</string>
+    <string name="setting_nicolive_landscape_fullscreen_title">Full screen in landscape</string>
+    <string name="setting_nicolive_landscape_fullscreen_description">Hide the comment list automatically when the screen is rotated to landscape</string>
     <string name="cache_progress_notification">Cache acquisition progress notification</string>
     <string name="cache_progress_now">Getting cache</string>
     <string name="reset">Reset</string>

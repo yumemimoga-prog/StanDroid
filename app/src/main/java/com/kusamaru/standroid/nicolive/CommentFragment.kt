@@ -217,8 +217,23 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
         }
 
         // 全画面再生時なら
+        val isLandscapeNow = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         if (viewModel.isFullScreenMode) {
-            requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+            if (viewModel.isFullScreenWithoutLock) {
+                // 向きを固定しない全画面：横画面なら続行、縦に戻したら解除
+                if (isLandscapeNow) {
+                    setFullScreen()
+                } else {
+                    viewModel.isFullScreenMode = false
+                    viewModel.isFullScreenWithoutLock = false
+                }
+            } else {
+                requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+                setFullScreen()
+            }
+        } else if (isLandscapeNow && prefSetting.getBoolean("setting_nicolive_landscape_fullscreen", false)) {
+            // 設定ON：横画面にしたら自動で全画面（コメント一覧を隠す）
+            viewModel.isFullScreenWithoutLock = true
             setFullScreen()
         }
 
@@ -451,12 +466,24 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
             viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setImageResource(if (isShowCommentCanvas) R.drawable.ic_comment_on else R.drawable.ic_comment_off)
         }
         viewBinding.commentFragmentControl.playerNicoliveControlBackground.setOnClickListener { startPlayService("background") }
+        // コメント一覧の表示切り替え（横画面のみ。画面の向きは固定しない）
+        viewBinding.commentFragmentControl.playerNicoliveControlCommentListToggle.isVisible = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        viewBinding.commentFragmentControl.playerNicoliveControlCommentListToggle.setOnClickListener {
+            if (viewModel.isFullScreenMode) {
+                viewModel.isFullScreenWithoutLock = false
+                setCloseFullScreen()
+            } else {
+                viewModel.isFullScreenWithoutLock = true
+                setFullScreen()
+            }
+        }
         viewBinding.commentFragmentControl.playerNicoliveControlFullscreen.setOnClickListener {
             if (viewModel.isFullScreenMode) {
                 // 全画面終了
                 setCloseFullScreen()
             } else {
                 // 全画面移行
+                viewModel.isFullScreenWithoutLock = false
                 requireActivity().requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
                 setFullScreen()
             }

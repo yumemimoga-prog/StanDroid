@@ -80,6 +80,19 @@
                     tools:visibility="visible" />
 
             <ImageView
+                    android:id="@+id/player_nicolive_control_comment_list_toggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:contentDescription="コメント一覧の表示切り替え"
+                    android:focusable="true"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_view_list_black"
+                    app:tint="#ffffff"
+                    android:tint="#ffffff"
+                    android:visibility="gone" />
+
+            <ImageView
                     android:id="@+id/player_nicolive_control_comment_toggle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

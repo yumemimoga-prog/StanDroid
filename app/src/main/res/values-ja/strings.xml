@@ -282,6 +282,8 @@
     <string name="setting_economy_description">エコノミーモードとは：低画質モードのことです。</string>
     <string name="setting_nicolive_quality_low_title">常に最低画質で視聴する</string>
     <string name="setting_nicolive_quality_low_description">インターネットが遅いときにどうぞ</string>
+    <string name="setting_nicolive_landscape_fullscreen_title">横画面で自動的に全画面にする</string>
+    <string name="setting_nicolive_landscape_fullscreen_description">横画面にしたとき右側のコメント一覧を出さずに動画を全画面表示します。操作ボタンの一覧ボタンでいつでも切り替えられます</string>
     <string name="cache_progress_notification">キャッシュ取得進捗通知</string>
     <string name="cache_progress_now">キャッシュ取得中</string>
     <string name="reset">リセット</string>
