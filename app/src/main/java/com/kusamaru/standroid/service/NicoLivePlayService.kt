@@ -322,6 +322,7 @@ class NicoLivePlayService : Service() {
                 super.onPlayerError(error)
                 error.printStackTrace()
                 println("生放送の再生が止まりました。")
+                runCatching { NicoLiveHlsDataSource.copyDiagnosticOnce(this@NicoLivePlayService, error, nicoLiveHTML) }
                 // 番組終了していなければ
                 if (!nicoLiveHTML.nicoLiveWebSocketClient.isClosed) {
                     println("再度再生準備を行います")

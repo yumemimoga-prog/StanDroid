@@ -616,6 +616,7 @@ class JCNicoLiveFragment : PlayerBaseFragment() {
                 super.onPlayerError(error)
                 error.printStackTrace()
                 println("生放送の再生が止まりました。")
+                runCatching { NicoLiveHlsDataSource.copyDiagnosticOnce(requireContext(), error, viewModel.nicoLiveHTML) }
                 //再接続する？
                 //それからニコ生視聴セッションWebSocketが切断されてなければ
                 if (!viewModel.nicoLiveHTML.nicoLiveWebSocketClient.isClosed) {

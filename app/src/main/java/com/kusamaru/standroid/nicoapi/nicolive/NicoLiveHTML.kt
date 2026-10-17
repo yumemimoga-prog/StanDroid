@@ -56,6 +56,10 @@ class NicoLiveHTML {
     @Volatile
     var hlsCookies: List<NicoLiveHlsDataSource.HlsCookie> = emptyList()
 
+    /** 診断用。streamメッセージの概要（Cookie値・トークンは含めない） */
+    @Volatile
+    var lastStreamDiagnostic: String = "(streamメッセージ未受信)"
+
     // コメント投稿で使う。isPremiumとかはinitNicoLiveData()を呼ばないとこの値は入りません！！！
     var premium = 0     // プレ垢なら1
     var isPremium = false   // 550円課金してるならtrue
@@ -300,7 +304,12 @@ class NicoLiveHTML {
         val site = jsonObject.getJSONObject("site")
         val relive = site.getJSONObject("relive")
         // WebSocketアドレス
-        val webSocketUrl = relive.getString("webSocketUrl")
+        val frontendId = site.optString("frontendId").ifEmpty { "9" }
+        // 公式と同じく frontend_id を付ける
+        val baseUrl = relive.getString("webSocketUrl")
+        val webSocketUrl = if (baseUrl.contains("frontend_id=")) baseUrl else {
+            baseUrl + (if (baseUrl.contains("?")) "&" else "?") + "frontend_id=$frontendId"
+        }
         // broadcastId
         connectionNicoLiveWebSocket(webSocketUrl, onMessageFun)
     }
@@ -350,6 +359,17 @@ class NicoLiveHTML {
                     // HLS用Cookieはプレイヤー作成より先に保存しておく
                     if (type == "stream") {
                         hlsCookies = NicoLiveHlsDataSource.parseCookies(message)
+                        NicoLiveHlsDataSource.resetDiagnostic()
+                        lastStreamDiagnostic = runCatching {
+                            val data = JSONObject(message).getJSONObject("data")
+                            val uri = URI(data.optString("uri"))
+                            "host=${uri.host} path=${uri.path?.takeLast(40)} query=${uri.query != null} keys=${data.keys().asSequence().toList()} cookies=${hlsCookies.joinToString { "${it.name}@${it.domain}${it.path}" }}"
+                        }.getOrDefault("(解析失敗)")
+                    }
+                    // サーバーからのpingには即座に応答する（公式・yt-dlpと同じ）
+                    if (type == "ping") {
+                        send("{\"type\":\"pong\"}")
+                        send("{\"type\":\"keepSeat\"}")
                     }
                     onMessageFun(type, message)
                     when {

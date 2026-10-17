@@ -1,6 +1,11 @@
 package com.kusamaru.standroid.nicoapi.nicolive
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.widget.Toast
+import androidx.media3.common.PlaybackException
+import androidx.media3.datasource.HttpDataSource
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
@@ -75,4 +80,52 @@ object NicoLiveHlsDataSource {
         }
         return DefaultDataSource.Factory(context, resolvingFactory)
     }
+
+    /** 1再生につき1回だけ診断情報をコピーするためのフラグ */
+    @Volatile
+    private var diagnosticCopied = false
+
+    /** 新しい番組を開いたらリセットする */
+    fun resetDiagnostic() {
+        diagnosticCopied = false
+    }
+
+    /**
+     * 再生エラーの診断情報を作る。Cookieの値やトークンは含めない
+     * */
+    fun buildDiagnostic(error: PlaybackException, html: NicoLiveHTML): String {
+        val lines = mutableListOf<String>()
+        lines += "StanDroid ニコ生 診断"
+        lines += "error=${error.errorCodeName}"
+        var cause: Throwable? = error
+        var depth = 0
+        while (cause != null && depth < 6) {
+            if (cause is HttpDataSource.InvalidResponseCodeException) {
+                lines += "http=${cause.responseCode} host=${cause.dataSpec.uri.host} path=${cause.dataSpec.uri.path?.takeLast(60)}"
+                lines += "sentCookie=${cause.dataSpec.httpRequestHeaders.containsKey("Cookie")}"
+                val body = runCatching { String(cause.responseBody, Charsets.UTF_8).take(200) }.getOrNull()
+                if (!body.isNullOrBlank()) lines += "body=$body"
+            } else {
+                lines += "cause=${cause.javaClass.simpleName}: ${cause.message?.take(150)}"
+            }
+            cause = cause.cause
+            depth++
+        }
+        lines += "stream=${html.lastStreamDiagnostic}"
+        return lines.joinToString("\n")
+    }
+
+    /** 診断情報をクリップボードへコピーしてToastで知らせる（1再生1回） */
+    fun copyDiagnosticOnce(context: Context, error: PlaybackException, html: NicoLiveHTML) {
+        if (diagnosticCopied) return
+        diagnosticCopied = true
+        val text = buildDiagnostic(error, html)
+        println(text)
+        runCatching {
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("StanDroid診断", text))
+            Toast.makeText(context, "エラーの詳細をコピーしました。チャットに貼り付けてください", Toast.LENGTH_LONG).show()
+        }
+    }
+
 }
