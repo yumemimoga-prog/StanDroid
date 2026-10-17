@@ -714,7 +714,7 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
     fun showProgramEndMessageSnackBar(message: String, commentJSONParse: CommentJSONParse) {
         if (commentJSONParse.premium.contains("運営")) {
             //終了メッセージ
-            Snackbar.make(viewBinding.fragmentNicoLiveFab, context?.getString(R.string.program_disconnect) ?: "", Snackbar.LENGTH_SHORT).setAction(context?.getString(R.string.end)) {
+            Snackbar.make(if (viewModel.isFullScreenMode) viewBinding.commentFragmentSurfaceView else viewBinding.fragmentNicoLiveFab, context?.getString(R.string.program_disconnect) ?: "", Snackbar.LENGTH_SHORT).setAction(context?.getString(R.string.end)) {
                 //終了
                 if (activity !is NimadoActivity) {
                     //二窓Activity以外では終了できるようにする。
@@ -961,7 +961,7 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
                             exoPlayer.setVideoSurfaceView(viewBinding.commentFragmentSurfaceView)
                             //再生
                             exoPlayer.playWhenReady = true
-                            Snackbar.make(viewBinding.fragmentNicoLiveFab, getString(R.string.error_player), Snackbar.LENGTH_SHORT).apply {
+                            Snackbar.make(if (viewModel.isFullScreenMode) viewBinding.commentFragmentSurfaceView else viewBinding.fragmentNicoLiveFab, getString(R.string.error_player), Snackbar.LENGTH_SHORT).apply {
                                 anchorView = getSnackbarAnchorView()
                                 // 再生が止まった時に低遅延が有効になっていればOFFにできるように。安定して見れない場合は低遅延が有効なのが原因
                                 if (viewModel.nicoLiveHTML.isLowLatency) {
@@ -1445,6 +1445,8 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
     }
 
     fun getSnackbarAnchorView(): View? {
+        // 全画面ではコメント一覧・投稿ボタンが画面外にあるので、基準にすると画面の上端にはみ出てしまう。画面下に出す
+        if (viewModel.isFullScreenMode) return null
         if (viewBinding.fragmentNicoLiveFab.isShown) {
             return viewBinding.fragmentNicoLiveFab
         } else {
