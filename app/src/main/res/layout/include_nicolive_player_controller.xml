@@ -33,6 +33,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_expand_more_24px"
                     app:tint="#ffffff"
+                    android:tint="#ffffff"
                     android:visibility="gone" />
 
             <LinearLayout
@@ -48,7 +49,11 @@
                         android:layout_height="wrap_content"
                         android:ellipsize="marquee"
                         android:singleLine="true"
-                        android:textColor="#ffffff" />
+                        android:textColor="#ffffff"
+                        android:shadowColor="#CC000000"
+                        android:shadowRadius="4"
+                        android:shadowDx="1"
+                        android:shadowDy="1" />
 
                 <TextView
                         android:id="@+id/player_nicolive_control_id"
@@ -56,6 +61,10 @@
                         android:layout_height="wrap_content"
                         android:maxLines="1"
                         android:textColor="#ffffff"
+                        android:shadowColor="#CC000000"
+                        android:shadowRadius="4"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
                         android:textSize="12sp" />
             </LinearLayout>
 
@@ -66,6 +75,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_outline_format_color_fill_24px"
                     app:tint="#ffffff"
+                    android:tint="#ffffff"
                     android:visibility="gone"
                     tools:visibility="visible" />
 
@@ -75,7 +85,8 @@
                     android:layout_height="wrap_content"
                     android:padding="10dp"
                     android:src="@drawable/ic_wifi_black_24dp"
-                    app:tint="#ffffff" />
+                    app:tint="#ffffff"
+                    android:tint="#ffffff" />
 
             <ImageView
                     android:id="@+id/player_nicolive_control_send"
@@ -84,6 +95,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_send_black"
                     app:tint="#ffffff"
+                    android:tint="#ffffff"
                     android:visibility="gone" />
 
             <ImageView
@@ -94,7 +106,8 @@
                     android:focusable="true"
                     android:padding="10dp"
                     android:src="@drawable/ic_popup_icon_black"
-                    app:tint="#ffffff" />
+                    app:tint="#ffffff"
+                    android:tint="#ffffff" />
 
             <ImageView
                     android:id="@+id/player_nicolive_control_background"
@@ -104,7 +117,8 @@
                     android:focusable="true"
                     android:padding="10dp"
                     android:src="@drawable/ic_background_icon_black"
-                    app:tint="#ffffff" />
+                    app:tint="#ffffff"
+                    android:tint="#ffffff" />
 
             <ImageView
                     android:id="@+id/player_nicolive_control_fullscreen"
@@ -114,7 +128,8 @@
                     android:focusable="true"
                     android:padding="10dp"
                     android:src="@drawable/ic_fullscreen_black_24dp"
-                    app:tint="#ffffff" />
+                    app:tint="#ffffff"
+                    android:tint="#ffffff" />
 
             <ImageView
                     android:id="@+id/player_nicolive_control_mute"
@@ -125,6 +140,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_volume_up_24px"
                     app:tint="#ffffff"
+                    android:tint="#ffffff"
                     android:visibility="gone" />
 
             <ImageView
@@ -136,6 +152,7 @@
                     android:padding="10dp"
                     android:src="@drawable/ic_clear_black"
                     app:tint="#ffffff"
+                    android:tint="#ffffff"
                     android:visibility="gone" />
         </LinearLayout>
 
