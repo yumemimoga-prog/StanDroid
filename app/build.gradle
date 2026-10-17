@@ -26,9 +26,19 @@ android {
         applicationId "com.kusamaru.standroid"
         minSdkVersion 26
         targetSdkVersion 33
-        versionCode 112
+        // CIでは -PversionCodeOverride で毎回増える番号にする（上書き更新のため）
+        versionCode project.findProperty("versionCodeOverride") ? project.findProperty("versionCodeOverride").toInteger() : 112
         versionName "15.7.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        // 修正版（フォーク）用の固定デバッグ署名。毎回同じ鍵で署名して上書き更新できるようにする
+        fixDebug {
+            storeFile file('standroid-fix-debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
     }
     buildTypes {
         release {
@@ -41,6 +51,7 @@ android {
         debug {
             // -PstandroidSuffix=.fix のように指定すると、公式版と別アプリとして共存インストールできる
             def suffix = project.findProperty("standroidSuffix")
+            signingConfig signingConfigs.fixDebug
             if (suffix) {
                 applicationIdSuffix suffix
                 versionNameSuffix "-fix"

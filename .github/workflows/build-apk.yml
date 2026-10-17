@@ -29,7 +29,7 @@ jobs:
             SUFFIX="-PstandroidSuffix=.fix"
           fi
           set -o pipefail
-          bash ./gradlew :app:testDebugUnitTest :app:assembleDebug $SUFFIX --console=plain 2>&1 | tee build.log || {
+          bash ./gradlew :app:testDebugUnitTest :app:assembleDebug $SUFFIX -PversionCodeOverride=$((112000 + ${{ github.run_number }})) --console=plain 2>&1 | tee build.log || {
             grep -E -A4 "^e: |What went wrong|FAILED$|> Task .*FAILED" build.log | grep -v NumberFormat | head -40 | while IFS= read -r line; do echo "::error::$line"; done
             exit 1
           }
