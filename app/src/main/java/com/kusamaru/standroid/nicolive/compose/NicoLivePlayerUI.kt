@@ -129,6 +129,22 @@ fun NicoLivePlayerUI(
                 }
             }
 
+            // UIを隠している時もすぐ押せるコメント表示切り替えボタン（右下）
+            if (!isShowPlayerUI.value && !isMiniPlayer) {
+                IconButton(
+                    onClick = { onClickCommentDraw() },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(6.dp)
+                        .background(color = Color.Black.copy(alpha = 0.45f), shape = androidx.compose.foundation.shape.CircleShape)
+                ) {
+                    Icon(
+                        painter = if (isShowCommentCanvas) painterResource(id = R.drawable.ic_comment_on) else painterResource(id = R.drawable.ic_comment_off),
+                        contentDescription = "コメント表示切り替え"
+                    )
+                }
+            }
+
             // UI表示
             if (isShowPlayerUI.value) {
                 Column(

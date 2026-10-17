@@ -56,12 +56,7 @@ object NicoLiveHlsDataSource {
     fun cookieHeaderFor(cookies: List<HlsCookie>, host: String?, path: String?): String? {
         if (host == null) return null
         val requestPath = path?.ifEmpty { "/" } ?: "/"
-        val matched = cookies.filter { cookie ->
-            val domain = cookie.domain.trimStart('.').lowercase()
-            val hostLower = host.lowercase()
-            val domainMatch = domain.isEmpty() || hostLower == domain || hostLower.endsWith(".$domain")
-            domainMatch && requestPath.startsWith(cookie.path)
-        }
+        val matched = cookies.filter { cookie -> matches(cookie, host, requestPath) }
         if (matched.isEmpty()) return null
         return matched.joinToString("; ") { "${it.name}=${it.value}" }
     }
@@ -72,19 +67,79 @@ object NicoLiveHlsDataSource {
      * */
     fun createFactory(context: Context, userAgent: String, cookiesProvider: () -> List<HlsCookie>): DataSource.Factory {
         val appContext = context.applicationContext
-        val httpFactory = DefaultHttpDataSource.Factory()
+        // Set-Cookie で更新される視聴Cookieに追従するため、ブラウザと同じくCookieJarを使う
+        val cookieJar = HlsCookieJar(cookiesProvider) { loginCookies(appContext) }
+        val okHttpClient = com.kusamaru.standroid.tool.OkHttpClientSingleton.okHttpClient.newBuilder()
+            .cookieJar(cookieJar)
+            .build()
+        val httpFactory = androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(okHttpClient)
             .setUserAgent(userAgent)
-            .setAllowCrossProtocolRedirects(true)
             // 公式プレイヤー（ブラウザ）と同じく視聴ページ由来のリクエストとして送る
             .setDefaultRequestProperties(mapOf(
                 "Origin" to "https://live.nicovideo.jp",
                 "Referer" to "https://live.nicovideo.jp/",
             ))
-        val resolvingFactory = ResolvingDataSource.Factory(httpFactory) { dataSpec ->
-            val header = cookieHeaderFor(cookiesProvider() + loginCookies(appContext), dataSpec.uri.host, dataSpec.uri.path)
-            if (header != null) dataSpec.withAdditionalHeaders(mapOf("Cookie" to header)) else dataSpec
+        return DefaultDataSource.Factory(context, httpFactory)
+    }
+
+    /** 診断用。最後に送ったCookie名 */
+    @Volatile
+    var lastSentCookieNames: String = "なし"
+
+    /** 視聴Cookie（streamメッセージ）＋Set-Cookieでの更新＋ログインCookie を扱うCookieJar */
+    private class HlsCookieJar(
+        private val provider: () -> List<HlsCookie>,
+        private val login: () -> List<HlsCookie>,
+    ) : okhttp3.CookieJar {
+        private var lastProvided: List<HlsCookie>? = null
+        private val store = LinkedHashMap<String, HlsCookie>()
+
+        @Synchronized
+        override fun loadForRequest(url: okhttp3.HttpUrl): List<okhttp3.Cookie> {
+            val provided = provider()
+            // 新しいstreamメッセージを受け取ったらその値で上書き
+            if (provided !== lastProvided) {
+                lastProvided = provided
+                provided.forEach { store[key(it.name, it.domain)] = it }
+            }
+            val matched = (store.values + login()).filter { matches(it, url.host, url.encodedPath) }
+            lastSentCookieNames = matched.joinToString { it.name }.ifEmpty { "なし" }
+            return matched.mapNotNull { cookie ->
+                runCatching {
+                    okhttp3.Cookie.Builder()
+                        .name(cookie.name)
+                        .value(cookie.value)
+                        .domain(cookie.domain.trimStart('.').ifEmpty { url.host })
+                        .path(cookie.path)
+                        .build()
+                }.getOrNull()
+            }
         }
-        return DefaultDataSource.Factory(context, resolvingFactory)
+
+        @Synchronized
+        override fun saveFromResponse(url: okhttp3.HttpUrl, cookies: List<okhttp3.Cookie>) {
+            val now = System.currentTimeMillis()
+            cookies.forEach { cookie ->
+                val k = key(cookie.name, cookie.domain)
+                if (cookie.expiresAt < now) {
+                    store.remove(k)
+                } else {
+                    store[k] = HlsCookie(domain = cookie.domain, path = cookie.path, name = cookie.name, value = cookie.value)
+                }
+            }
+        }
+
+        private fun key(name: String, domain: String) = "$name@${domain.trimStart('.').lowercase()}"
+    }
+
+    /** Cookieがこのホスト・パスへ送るものかどうか */
+    fun matches(cookie: HlsCookie, host: String?, path: String?): Boolean {
+        if (host == null) return false
+        val requestPath = path?.ifEmpty { "/" } ?: "/"
+        val domain = cookie.domain.trimStart('.').lowercase()
+        val hostLower = host.lowercase()
+        val domainMatch = domain.isEmpty() || hostLower == domain || hostLower.endsWith(".$domain")
+        return domainMatch && requestPath.startsWith(cookie.path)
     }
 
     /**
@@ -119,8 +174,7 @@ object NicoLiveHlsDataSource {
             val current = cause
             if (current is HttpDataSource.InvalidResponseCodeException) {
                 lines += "http=${current.responseCode} host=${current.dataSpec.uri.host} path=${current.dataSpec.uri.path?.takeLast(60)}"
-                val sentNames = current.dataSpec.httpRequestHeaders["Cookie"]?.split(";")?.map { it.trim().substringBefore("=") }
-                lines += "sentCookie=${sentNames ?: "なし"}"
+                lines += "sentCookie=$lastSentCookieNames"
                 val body = runCatching { String(current.responseBody, Charsets.UTF_8).take(200) }.getOrNull()
                 if (!body.isNullOrBlank()) lines += "body=$body"
             } else {
@@ -129,6 +183,7 @@ object NicoLiveHlsDataSource {
             cause = current.cause
             depth++
         }
+        lines += "lastCookie=$lastSentCookieNames"
         lines += "stream=${html.lastStreamDiagnostic}"
         return lines.joinToString("\n")
     }

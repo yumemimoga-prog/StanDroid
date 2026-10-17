@@ -413,6 +413,12 @@ class NicoLivePlayService : Service() {
             commentCanvas = overlayCommentCanvas
             commentCanvas!!.isPopupView = true
 
+            // コメント表示切り替え（常に表示している小さいボタン）
+            overlayCommentToggle.setOnClickListener {
+                overlayCommentCanvas.visibility = if (overlayCommentCanvas.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE
+                overlayCommentToggle.setImageResource(if (overlayCommentCanvas.visibility == View.VISIBLE) R.drawable.ic_comment_on else R.drawable.ic_comment_off)
+            }
+
             if (isNicoJK()) {
                 // ニコニコ実況の場合はSurfaceView非表示
                 overlaySurfaceview.visibility = View.GONE
