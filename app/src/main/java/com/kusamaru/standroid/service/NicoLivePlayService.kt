@@ -322,7 +322,7 @@ class NicoLivePlayService : Service() {
         popupExoPlayer = ExoPlayer.Builder(this).build()
         val sourceFactory = NicoLiveHlsDataSource.createFactory(this, "Stan-Droid;@kusamaru_jp") { nicoLiveHTML.hlsCookies }
 
-        val hlsMediaSource = HlsMediaSource.Factory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
+        val hlsMediaSource = NicoLiveHlsDataSource.createMediaSourceFactory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
         //再生準備
         popupExoPlayer.setMediaSource(hlsMediaSource)
         popupExoPlayer.prepare()

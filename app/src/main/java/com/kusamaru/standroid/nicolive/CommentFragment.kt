@@ -79,6 +79,10 @@ import kotlin.concurrent.timerTask
  * */
 class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
 
+    /** コメントを動画の上に流すかどうか（コメント表示切り替えボタン） */
+    private var isShowCommentCanvas = true
+
+
     lateinit var commentActivity: AppCompatActivity
     lateinit var prefSetting: SharedPreferences
     lateinit var darkModeSupport: DarkModeSupport
@@ -439,9 +443,12 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
         viewBinding.commentFragmentControl.playerNicoliveControlPopup.setOnClickListener { startPlayService("popup") }
         // コメント表示切り替え
         viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setOnClickListener {
-            val canvas = viewBinding.commentFragmentCommentCanvas
-            canvas.visibility = if (canvas.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE
-            viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setImageResource(if (canvas.visibility == View.VISIBLE) R.drawable.ic_comment_on else R.drawable.ic_comment_off)
+            isShowCommentCanvas = !isShowCommentCanvas
+            val visibility = if (isShowCommentCanvas) View.VISIBLE else View.INVISIBLE
+            // MotionLayoutはConstraintSet側の表示設定で上書きしてくるので、そちらも変更する
+            MotionLayoutTool.setMotionLayoutViewVisible(viewBinding.commentFragmentMotionLayout, R.id.comment_fragment_comment_canvas, visibility)
+            viewBinding.commentFragmentCommentCanvas.visibility = visibility
+            viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setImageResource(if (isShowCommentCanvas) R.drawable.ic_comment_on else R.drawable.ic_comment_off)
         }
         viewBinding.commentFragmentControl.playerNicoliveControlBackground.setOnClickListener { startPlayService("background") }
         viewBinding.commentFragmentControl.playerNicoliveControlFullscreen.setOnClickListener {
@@ -891,7 +898,7 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
             // 高さ更新
             viewBinding.commentFragmentCommentCanvas.finalHeight = viewBinding.commentFragmentCommentCanvas.height
             val sourceFactory = NicoLiveHlsDataSource.createFactory(requireContext(), "Stan-Droid;@kusamaru_jp") { viewModel.nicoLiveHTML.hlsCookies }
-            val hlsMediaSource = HlsMediaSource.Factory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
+            val hlsMediaSource = NicoLiveHlsDataSource.createMediaSourceFactory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
             //再生準備
             exoPlayer.setMediaSource(hlsMediaSource)
             exoPlayer.prepare()

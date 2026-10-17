@@ -82,6 +82,55 @@ object NicoLiveHlsDataSource {
         return DefaultDataSource.Factory(context, httpFactory)
     }
 
+    /** 診断用。直近のプレイリストに低遅延パート（EXT-X-PART）が含まれていたか */
+    @Volatile
+    var lastPlaylistHadParts: Boolean? = null
+
+    /**
+     * ニコ生用のHlsMediaSource.Factory。
+     * 低遅延HLSのパート（EXT-X-PART / PRELOAD-HINT）をプレイリストから取り除き、通常のセグメント単位で再生させる。
+     * パートとAES-128（セグメント全体暗号化）を組み合わせると、古いExoPlayerは途中から復号して
+     * 映像が壊れる（Skipping atom with length > 2147483647 / BAD_DECRYPT）ことがあるため。
+     * */
+    fun createMediaSourceFactory(dataSourceFactory: DataSource.Factory): androidx.media3.exoplayer.hls.HlsMediaSource.Factory {
+        return androidx.media3.exoplayer.hls.HlsMediaSource.Factory(dataSourceFactory)
+            .setPlaylistParserFactory(NoPartsPlaylistParserFactory())
+    }
+
+    private class NoPartsPlaylistParserFactory : androidx.media3.exoplayer.hls.playlist.HlsPlaylistParserFactory {
+        private val base = androidx.media3.exoplayer.hls.playlist.DefaultHlsPlaylistParserFactory()
+
+        override fun createPlaylistParser() = wrap(base.createPlaylistParser())
+
+        override fun createPlaylistParser(
+            multivariantPlaylist: androidx.media3.exoplayer.hls.playlist.HlsMultivariantPlaylist,
+            previousMediaPlaylist: androidx.media3.exoplayer.hls.playlist.HlsMediaPlaylist?,
+        ) = wrap(base.createPlaylistParser(multivariantPlaylist, previousMediaPlaylist))
+
+        private fun wrap(
+            parser: androidx.media3.exoplayer.upstream.ParsingLoadable.Parser<androidx.media3.exoplayer.hls.playlist.HlsPlaylist>
+        ) = androidx.media3.exoplayer.upstream.ParsingLoadable.Parser<androidx.media3.exoplayer.hls.playlist.HlsPlaylist> { uri, inputStream ->
+            val text = inputStream.readBytes().toString(Charsets.UTF_8)
+            var hadParts = false
+            val filtered = text.lineSequence().filterNot { line ->
+                val remove = line.startsWith("#EXT-X-PART:") || line.startsWith("#EXT-X-PRELOAD-HINT") ||
+                    line.startsWith("#EXT-X-PART-INF") || line.startsWith("#EXT-X-RENDITION-REPORT") ||
+                    line.startsWith("#EXT-X-SKIP")
+                if (line.startsWith("#EXT-X-PART:")) hadParts = true
+                remove
+            }.map { line ->
+                // ブロッキング再読込・パート関連の指定も外す（パート無しで整合させる）
+                if (line.startsWith("#EXT-X-SERVER-CONTROL:")) {
+                    val attrs = line.substringAfter(':').split(',')
+                        .filterNot { it.startsWith("CAN-BLOCK-RELOAD") || it.startsWith("PART-HOLD-BACK") || it.startsWith("CAN-SKIP-UNTIL") || it.startsWith("CAN-SKIP-DATERANGES") }
+                    if (attrs.isEmpty()) "" else "#EXT-X-SERVER-CONTROL:" + attrs.joinToString(",")
+                } else line
+            }.joinToString("\n")
+            if (text.contains("#EXTINF")) lastPlaylistHadParts = hadParts
+            parser.parse(uri, filtered.byteInputStream(Charsets.UTF_8))
+        }
+    }
+
     /** 診断用。最後に送ったCookie名 */
     @Volatile
     var lastSentCookieNames: String = "なし"
@@ -184,6 +233,7 @@ object NicoLiveHlsDataSource {
             depth++
         }
         lines += "lastCookie=$lastSentCookieNames"
+        lines += "playlistHadParts=$lastPlaylistHadParts"
         lines += "stream=${html.lastStreamDiagnostic}"
         return lines.joinToString("\n")
     }

@@ -574,7 +574,7 @@ class JCNicoLiveFragment : PlayerBaseFragment() {
         // HLS受け取り。視聴権Cookieを付けるDataSourceを使う
         val mediaItem = MediaItem.fromUri(address.toUri())
         val dataSourceFactory = NicoLiveHlsDataSource.createFactory(requireContext(), "Stan-Droid;@kusamaru_jp") { viewModel.nicoLiveHTML.hlsCookies }
-        val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
+        val hlsMediaSource = NicoLiveHlsDataSource.createMediaSourceFactory(dataSourceFactory).createMediaSource(mediaItem)
         exoPlayer.setMediaSource(hlsMediaSource)
         exoPlayer.prepare()
         // SurfaceView
