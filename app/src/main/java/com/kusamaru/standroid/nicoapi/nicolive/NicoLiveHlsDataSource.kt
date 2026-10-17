@@ -100,15 +100,16 @@ object NicoLiveHlsDataSource {
         var cause: Throwable? = error
         var depth = 0
         while (cause != null && depth < 6) {
-            if (cause is HttpDataSource.InvalidResponseCodeException) {
-                lines += "http=${cause.responseCode} host=${cause.dataSpec.uri.host} path=${cause.dataSpec.uri.path?.takeLast(60)}"
-                lines += "sentCookie=${cause.dataSpec.httpRequestHeaders.containsKey("Cookie")}"
-                val body = runCatching { String(cause.responseBody, Charsets.UTF_8).take(200) }.getOrNull()
+            val current = cause
+            if (current is HttpDataSource.InvalidResponseCodeException) {
+                lines += "http=${current.responseCode} host=${current.dataSpec.uri.host} path=${current.dataSpec.uri.path?.takeLast(60)}"
+                lines += "sentCookie=${current.dataSpec.httpRequestHeaders.containsKey("Cookie")}"
+                val body = runCatching { String(current.responseBody, Charsets.UTF_8).take(200) }.getOrNull()
                 if (!body.isNullOrBlank()) lines += "body=$body"
             } else {
-                lines += "cause=${cause.javaClass.simpleName}: ${cause.message?.take(150)}"
+                lines += "cause=${current.javaClass.simpleName}: ${current.message?.take(150)}"
             }
-            cause = cause.cause
+            cause = current.cause
             depth++
         }
         lines += "stream=${html.lastStreamDiagnostic}"
