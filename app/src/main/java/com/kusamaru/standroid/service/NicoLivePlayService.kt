@@ -79,6 +79,9 @@ class NicoLivePlayService : Service() {
     /** コメントサーバー接続など */
     val nicoLiveComment = NicoLiveComment()
 
+    /** 新コメントサーバー（NDGR）クライアント */
+    private val nicoLiveNdgrComment = com.kusamaru.standroid.nicoapi.nicolive.NicoLiveNdgrComment()
+
     // 生放送再生するやつ
     private lateinit var popupExoPlayer: ExoPlayer
 
@@ -211,6 +214,15 @@ class NicoLivePlayService : Service() {
                                 // 新ニコニコ実況のとき
                                 Handler(Looper.getMainLooper()).post {
                                     initPopUpView()
+                                }
+                            }
+                        }
+                        command == "messageServer" -> {
+                            // 新コメントサーバー（NDGR）
+                            if (isPopupPlay()) {
+                                val viewUri = org.json.JSONObject(message).getJSONObject("data").optString("viewUri")
+                                if (viewUri.isNotEmpty()) {
+                                    nicoLiveNdgrComment.connect(viewUri, getString(R.string.room_integration), ::commentFun)
                                 }
                             }
                         }
@@ -744,6 +756,7 @@ class NicoLivePlayService : Service() {
         }
         nicoLiveHTML.destroy()
         nicoLiveComment.destroy()
+        nicoLiveNdgrComment.destroy()
         if (::mediaSessionCompat.isInitialized) {
             mediaSessionCompat.apply {
                 isActive = false

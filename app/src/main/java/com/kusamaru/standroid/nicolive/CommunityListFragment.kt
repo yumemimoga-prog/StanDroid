@@ -109,7 +109,7 @@ class CommunityListFragment : Fragment() {
         // 例外を捕まえる。これでtry/catchをそれぞれ書かなくても済む？
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         // コルーチン実行
         lifecycleScope.launch(errorHandler) {
@@ -140,7 +140,7 @@ class CommunityListFragment : Fragment() {
         // 例外を捕まえる。これでtry/catchをそれぞれ書かなくても済む？
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         // コルーチン実行
         lifecycleScope.launch(errorHandler) {
@@ -172,7 +172,7 @@ class CommunityListFragment : Fragment() {
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー
             throwable.printStackTrace()
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         // コルーチン実行
         lifecycleScope.launch(errorHandler) {
@@ -218,7 +218,7 @@ class CommunityListFragment : Fragment() {
         // 例外を捕まえる。これでtry/catchをそれぞれ書かなくても済む？
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         // コルーチン実行
         lifecycleScope.launch(errorHandler) {
@@ -261,7 +261,7 @@ class CommunityListFragment : Fragment() {
         // 例外を捕まえる。これでtry/catchをそれぞれ書かなくても済む？
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         // コルーチン実行
         lifecycleScope.launch(errorHandler) {

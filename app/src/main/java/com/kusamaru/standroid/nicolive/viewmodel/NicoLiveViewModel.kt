@@ -58,6 +58,9 @@ class NicoLiveViewModel(application: Application, val liveIdOrCommunityId: Strin
     /** ニコ生のコメントサーバーへ接続する */
     val nicoLiveComment = NicoLiveComment()
 
+    /** 新コメントサーバー（NDGR）クライアント */
+    private val nicoLiveNdgrComment = com.kusamaru.standroid.nicoapi.nicolive.NicoLiveNdgrComment()
+
     /** Snackbar表示用LiveData。複数行行ける */
     val snackbarLiveData = MutableLiveData<String>()
 
@@ -222,7 +225,7 @@ class NicoLiveViewModel(application: Application, val liveIdOrCommunityId: Strin
         nicoLiveHTML.isPostTokumeiComment = prefSetting.getBoolean("nicolive_post_tokumei", true)
         // エラーのとき（タイムアウトなど）はここでToastを出すなど
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
 
         // 低遅延設定
@@ -577,6 +580,15 @@ ${getString(R.string.one_minute_statistics_comment_length)}：$commentLengthAver
                         changeQualityLiveData.postValue(nicoLiveHTML.getCurrentQuality(message))
                     }
                     isNotFirstQualityMessage = true
+                }
+                "messageServer" -> {
+                    // 新コメントサーバー（NDGR）。2024年以降はroomの代わりにこれが来る
+                    if (!isTSWatching) {
+                        val viewUri = org.json.JSONObject(message).getJSONObject("data").optString("viewUri")
+                        if (viewUri.isNotEmpty()) {
+                            nicoLiveNdgrComment.connect(viewUri, getString(R.string.room_integration), ::receiveCommentFun)
+                        }
+                    }
                 }
                 "room" -> {
                     // コメントサーバーの情報
@@ -991,7 +1003,7 @@ ${getString(R.string.one_minute_statistics_comment_length)}：$commentLengthAver
     fun registerTimeShift() {
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー時
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         viewModelScope.launch(errorHandler) {
             val timeShiftAPI = NicoLiveTimeShiftAPI()
@@ -1021,7 +1033,7 @@ ${getString(R.string.one_minute_statistics_comment_length)}：$commentLengthAver
     fun unRegisterTimeShift() {
         val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
             // エラー時
-            showToast("${getString(R.string.error)}\n${throwable}")
+            showToast("${getString(R.string.error)}\n${throwable}"); com.kusamaru.standroid.tool.ErrorReport.copy(context, throwable)
         }
         viewModelScope.launch(errorHandler) {
             val timeShiftAPI = NicoLiveTimeShiftAPI()
@@ -1053,6 +1065,7 @@ ${getString(R.string.one_minute_statistics_comment_length)}：$commentLengthAver
         super.onCleared()
         nicoLiveHTML.destroy()
         nicoLiveComment.destroy()
+        nicoLiveNdgrComment.destroy()
         nicoLiveTimeShiftComment.destroy()
     }
 }
