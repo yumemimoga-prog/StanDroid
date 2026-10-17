@@ -1,5 +1,6 @@
 package com.kusamaru.standroid.service
 
+import com.kusamaru.standroid.nicoapi.nicolive.NicoLiveHlsDataSource
 import android.app.*
 import android.content.*
 import android.graphics.Color
@@ -307,23 +308,7 @@ class NicoLivePlayService : Service() {
         // ポップアップ再生、バッググラウンド再生　共にExoPlayer、MediaSessionの初期化を行う。
         // ExoPlayer初期化
         popupExoPlayer = ExoPlayer.Builder(this).build()
-        val sourceFactory = DefaultDataSourceFactory(this, "Stan-Droid;@kusamaru_jp", object : TransferListener {
-            override fun onTransferInitializing(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-            }
-
-            override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-            }
-
-            override fun onBytesTransferred(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean, bytesTransferred: Int) {
-
-            }
-
-            override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-            }
-        })
+        val sourceFactory = NicoLiveHlsDataSource.createFactory(this, "Stan-Droid;@kusamaru_jp") { nicoLiveHTML.hlsCookies }
 
         val hlsMediaSource = HlsMediaSource.Factory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
         //再生準備

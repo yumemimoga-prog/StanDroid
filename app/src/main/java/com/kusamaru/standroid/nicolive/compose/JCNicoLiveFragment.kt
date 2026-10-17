@@ -1,5 +1,7 @@
 package com.kusamaru.standroid.nicolive.compose
 
+import androidx.media3.exoplayer.hls.HlsMediaSource
+import com.kusamaru.standroid.nicoapi.nicolive.NicoLiveHlsDataSource
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
@@ -569,9 +571,11 @@ class JCNicoLiveFragment : PlayerBaseFragment() {
         } else {
             nicolivePlayerUIBinding.includeNicolivePlayerSurfaceView.background = null
         }
-        // HLS受け取り
+        // HLS受け取り。視聴権Cookieを付けるDataSourceを使う
         val mediaItem = MediaItem.fromUri(address.toUri())
-        exoPlayer.setMediaItem(mediaItem)
+        val dataSourceFactory = NicoLiveHlsDataSource.createFactory(requireContext(), "Stan-Droid;@kusamaru_jp") { viewModel.nicoLiveHTML.hlsCookies }
+        val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
+        exoPlayer.setMediaSource(hlsMediaSource)
         exoPlayer.prepare()
         // SurfaceView
         exoPlayer.setVideoSurfaceView(nicolivePlayerUIBinding.includeNicolivePlayerSurfaceView)
@@ -618,7 +622,7 @@ class JCNicoLiveFragment : PlayerBaseFragment() {
                     println("再度再生準備を行います")
                     activity?.runOnUiThread {
                         //再生準備
-                        exoPlayer.setMediaItem(mediaItem)
+                        exoPlayer.setMediaSource(hlsMediaSource)
                         exoPlayer.prepare()
                         //SurfaceViewセット
                         exoPlayer.setVideoSurfaceView(nicolivePlayerUIBinding.includeNicolivePlayerSurfaceView)

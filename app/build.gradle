@@ -38,6 +38,14 @@ android {
 //        debug {
 //            applicationIdSuffix ".kaihatu"
 //        }
+        debug {
+            // -PstandroidSuffix=.fix のように指定すると、公式版と別アプリとして共存インストールできる
+            def suffix = project.findProperty("standroidSuffix")
+            if (suffix) {
+                applicationIdSuffix suffix
+                versionNameSuffix "-fix"
+            }
+        }
     }
 
     // Kotlinを書くきっかけになった Kotlin Android Extensions がいよいよ非推奨になってしまった

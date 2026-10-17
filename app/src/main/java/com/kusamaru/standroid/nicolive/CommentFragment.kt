@@ -1,5 +1,6 @@
 package com.kusamaru.standroid.nicolive
 
+import com.kusamaru.standroid.nicoapi.nicolive.NicoLiveHlsDataSource
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -883,23 +884,7 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
 
             // 高さ更新
             viewBinding.commentFragmentCommentCanvas.finalHeight = viewBinding.commentFragmentCommentCanvas.height
-            val sourceFactory = DefaultDataSourceFactory(requireContext(), "Stan-Droid;@kusamaru_jp", object : TransferListener {
-                override fun onTransferInitializing(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-                }
-
-                override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-                }
-
-                override fun onBytesTransferred(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean, bytesTransferred: Int) {
-
-                }
-
-                override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
-
-                }
-            })
+            val sourceFactory = NicoLiveHlsDataSource.createFactory(requireContext(), "Stan-Droid;@kusamaru_jp") { viewModel.nicoLiveHTML.hlsCookies }
             val hlsMediaSource = HlsMediaSource.Factory(sourceFactory).createMediaSource(MediaItem.fromUri(hlsAddress.toUri()))
             //再生準備
             exoPlayer.setMediaSource(hlsMediaSource)

@@ -52,6 +52,10 @@ class NicoLiveHTML {
     // postKey取るときに使うthreadId
     var threadId = ""
 
+    /** HLS取得時に付けるCookie。streamメッセージを受け取るたびに更新される（accessRightMethod=single_cookie） */
+    @Volatile
+    var hlsCookies: List<NicoLiveHlsDataSource.HlsCookie> = emptyList()
+
     // コメント投稿で使う。isPremiumとかはinitNicoLiveData()を呼ばないとこの値は入りません！！！
     var premium = 0     // プレ垢なら1
     var isPremium = false   // 550円課金してるならtrue
@@ -310,6 +314,7 @@ class NicoLiveHTML {
         // 2020/09/03？あたりからユーザーエージェント未指定の場合は{"type":"error","body":{"code":"CONNECT_ERROR"}}が送られてくるように
         val headerMap = mutableMapOf<String, String>()
         headerMap["User-Agent"] = "Stan-Droid;@kusamaru_jp"
+        headerMap["Origin"] = "https://live.nicovideo.jp" // 公式プレイヤーと同じOrigin
         nicoLiveWebSocketClient = object : WebSocketClient(URI(webSocketUrl), headerMap) {
             override fun onOpen(handshakedata: ServerHandshake?) {
                 // 視聴セッションWebSocketに接続したら最初に送らないといけないJSONがあるので送りつける。2020/06/02から送るJSONの中身が変わっているぞおい勝手に変更するな
@@ -321,6 +326,7 @@ class NicoLiveHTML {
                             put("protocol", "hls")
                             put("latency", toLatencyString()) // 低遅延。highかlowになった。Booleanに戻せよ
                             put("chasePlay", false)
+                            put("accessRightMethod", ACCESS_RIGHT_METHOD) // これが無いとHLSが403になる
                         })
                         put("room", JSONObject().apply {
                             put("protocol", "webSocket")
@@ -341,6 +347,10 @@ class NicoLiveHTML {
                 if (message != null) {
                     // type。streamとかcommentroomとか
                     val type = JSONObject(message).getString("type")
+                    // HLS用Cookieはプレイヤー作成より先に保存しておく
+                    if (type == "stream") {
+                        hlsCookies = NicoLiveHlsDataSource.parseCookies(message)
+                    }
                     onMessageFun(type, message)
                     when {
                         type == "stream" -> {
@@ -657,6 +667,7 @@ class NicoLiveHTML {
                 put("protocol", "hls")
                 put("latency", toLatencyString())
                 put("chasePlay", false)
+                put("accessRightMethod", ACCESS_RIGHT_METHOD)
             })
         }
         //送信
@@ -675,6 +686,7 @@ class NicoLiveHTML {
                 put("protocol", "hls")
                 put("latency", toLatencyString(isLowLatency))
                 put("chasePlay", false)
+                put("accessRightMethod", ACCESS_RIGHT_METHOD)
             })
         }
         // 送信
@@ -725,6 +737,12 @@ class NicoLiveHTML {
     private fun toUnixTime(time: String): Long {
         val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
         return simpleDateFormat.parse(time).time
+    }
+
+
+    companion object {
+        /** HLSの視聴権をCookieで受け取る方式。2026年時点の公式プレイヤーと同じ */
+        const val ACCESS_RIGHT_METHOD = "single_cookie"
     }
 
 }
