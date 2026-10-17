@@ -25,22 +25,6 @@
                 android:id="@+id/overlay_control_include"
                 layout="@layout/include_nicolive_player_controller" />
 
-        <!-- コントローラーを出さなくてもすぐ押せるコメント表示切り替え -->
-        <ImageView
-                android:id="@+id/overlay_comment_toggle"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_gravity="bottom|end"
-                android:layout_margin="4dp"
-                android:background="@drawable/bg_round_translucent"
-                android:clickable="true"
-                android:contentDescription="コメント表示切り替え"
-                android:elevation="6dp"
-                android:focusable="true"
-                android:padding="7dp"
-                android:src="@drawable/ic_comment_on"
-                android:tint="#ffffff" />
-
     </FrameLayout>
 
 </LinearLayout>

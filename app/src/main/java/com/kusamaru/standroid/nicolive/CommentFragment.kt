@@ -437,6 +437,12 @@ class CommentFragment : Fragment(), MainActivityPlayerFragmentInterface {
         viewBinding.commentFragmentControl.playerNicoliveControlTitle.isSelected = true
         // 全画面/ポップアップ/バッググラウンド
         viewBinding.commentFragmentControl.playerNicoliveControlPopup.setOnClickListener { startPlayService("popup") }
+        // コメント表示切り替え
+        viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setOnClickListener {
+            val canvas = viewBinding.commentFragmentCommentCanvas
+            canvas.visibility = if (canvas.visibility == View.VISIBLE) View.INVISIBLE else View.VISIBLE
+            viewBinding.commentFragmentControl.playerNicoliveControlCommentToggle.setImageResource(if (canvas.visibility == View.VISIBLE) R.drawable.ic_comment_on else R.drawable.ic_comment_off)
+        }
         viewBinding.commentFragmentControl.playerNicoliveControlBackground.setOnClickListener { startPlayService("background") }
         viewBinding.commentFragmentControl.playerNicoliveControlFullscreen.setOnClickListener {
             if (viewModel.isFullScreenMode) {

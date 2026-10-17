@@ -80,6 +80,18 @@
                     tools:visibility="visible" />
 
             <ImageView
+                    android:id="@+id/player_nicolive_control_comment_toggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:contentDescription="コメント表示切り替え"
+                    android:focusable="true"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_comment_on"
+                    app:tint="#ffffff"
+                    android:tint="#ffffff" />
+
+            <ImageView
                     android:id="@+id/player_nicolive_control_video_network"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
