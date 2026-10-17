@@ -15,6 +15,16 @@ fun hasMailPass(context: Context?): Boolean {
 }
 
 /**
+ * ログイン済みかどうか。公式ページ（WebView）ログインはメール・パスワードを保存せず
+ * user_session だけを保存するので、どちらかがあればログイン済みとして扱う。
+ * @return ログイン済みならtrue
+ * */
+fun hasLoginSession(context: Context?): Boolean {
+    val prefSetting = PreferenceManager.getDefaultSharedPreferences(context)
+    return prefSetting.getString("user_session", "")?.isNotEmpty() == true || hasMailPass(context)
+}
+
+/**
  * ログインしないで利用する設定が有効かどうか確認する関数。有効時はtrue
  * @param context Context
  * @return 有効時はtrueです

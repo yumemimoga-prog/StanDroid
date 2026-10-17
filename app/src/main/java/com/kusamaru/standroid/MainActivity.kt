@@ -433,7 +433,7 @@ class MainActivity : AppCompatActivity() {
     // 番組一覧
     private fun showProgramListFragment() {
         //ログイン情報があるかどうか
-        if (prefSetting.getString("mail", "")?.isNotEmpty() == true) {
+        if (hasLoginSession(this)) {
             setFragment(ProgramListFragment())
         } else {
             // ログイン画面へ切り替える
@@ -445,7 +445,7 @@ class MainActivity : AppCompatActivity() {
     // 動画一覧
     private fun showVideoListFragment() {
         //ログイン情報があるかどうか
-        if (prefSetting.getString("mail", "")?.isNotEmpty() == true || isNotLoginMode(this)) {
+        if (hasLoginSession(this) || isNotLoginMode(this)) {
             setFragment(NicoVideoSelectFragment())
         } else {
             // ログイン画面へ切り替える
@@ -514,14 +514,14 @@ class MainActivity : AppCompatActivity() {
             nicoIDMatcher.find() -> {
                 // 生放送ID
                 val liveId = nicoIDMatcher.group()
-                if (hasMailPass(this)) {
+                if (hasLoginSession(this)) {
                     setNicoliveFragment(liveId)
                 }
             }
             communityIDMatcher.find() -> {
                 // コミュID
                 val communityId = communityIDMatcher.group()
-                if (hasMailPass(this)) {
+                if (hasLoginSession(this)) {
                     // エラー時
                     val errorHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
                         showToast("${getString(R.string.error)}\n${throwable}")
